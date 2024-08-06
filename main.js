@@ -1,3 +1,6 @@
+// Ensure to import the Plugin class from Obsidian's API
+const { Plugin, Notice } = require('obsidian');
+
 class HelloWorldPlugin extends Plugin {
     async onload() {
         console.log('Loading Hello World plugin');
