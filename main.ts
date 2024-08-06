@@ -89,48 +89,89 @@ export default class HelloWorldPlugin extends Plugin {
         const headingStack: { id: string, level: number }[] = [];
 
         lines.forEach((line, index) => {
-            const headingMatch = line.match(/^(#{1,6})\s+(.*)/);
-            if (headingMatch) {
-                const level = headingMatch[1]?.length || 0;
-                const text = headingMatch[2] || '';
-                const nodeId = `node-${index}`;
+            try {
+                const headingMatch = line.match(/^(#{1,6})\s+(.*)/);
+                if (headingMatch) {
+                    const level = headingMatch[1]?.length || 0;
+                    const text = headingMatch[2] || '';
+                    const nodeId = `node-${index}`;
 
-                // Create the node
-                nodes.push({
-                    id: nodeId,
-                    x: 100 * level,
-                    y: yPos,
-                    width: 200,
-                    height: 50,
-                    text,
-                    type: "text",
-                    fontSize: 16 + (6 - level) * 2,
-                });
-
-                console.log(`Created node: ${nodeId} at level ${level} with text "${text}"`);
-
-                // Create edges based on heading nesting
-                while (headingStack.length > 0 && headingStack[headingStack.length - 1].level >= level) {
-                    headingStack.pop();
-                }
-
-                if (headingStack.length > 0) {
-                    const parentNodeId = headingStack[headingStack.length - 1].id;
-                    edges.push({
-                        id: `edge-${parentNodeId}-${nodeId}`,
-                        fromNode: parentNodeId,
-                        toNode: nodeId,
-                        fromSide: "bottom",
-                        toSide: "top",
+                    // Create the node
+                    nodes.push({
+                        id: nodeId,
+                        x: 100 * level,
+                        y: yPos,
+                        width: 200,
+                        height: 50,
+                        text,
+                        type: "text",
+                        fontSize: 16 + (6 - level) * 2,
                     });
-                    console.log(`Created edge from ${parentNodeId} to ${nodeId}`);
+
+                    console.log(`Created node: ${nodeId} at level ${level} with text "${text}"`);
+
+                    // Create edges based on heading nesting
+                    while (headingStack.length > 0 && headingStack[headingStack.length - 1].level >= level) {
+                        headingStack.pop();
+                    }
+
+                    if (headingStack.length > 0) {
+                        const parentNodeId = headingStack[headingStack.length - 1].id;
+                        edges.push({
+                            id: `edge-${parentNodeId}-${nodeId}`,
+                            fromNode: parentNodeId,
+                            toNode: nodeId,
+                            fromSide: "bottom",
+                            toSide: "top",
+                        });
+                        console.log(`Created edge from ${parentNodeId} to ${nodeId}`);
+                    }
+
+                    headingStack.push({ id: nodeId, level });
+
+                    yPos += 70; // Adjust spacing between nodes
                 }
-
-                headingStack.push({ id: nodeId, level });
-
-                yPos += 70; // Adjust spacing between nodes
+            } catch (error) {
+                console.error(`Error processing line ${index + 1}:`, line);
+                console.error(error);
             }
         });
+
+        // Add hardcoded nodes and edge for troubleshooting
+        const hardcodedNode1: CanvasTextData = {
+            id: 'hardcoded-node-1',
+            x: 100,
+            y: 100,
+            width: 200,
+            height: 50,
+            text: 'Hardcoded Node 1',
+            type: 'text',
+            fontSize: 16,
+        };
+
+        const hardcodedNode2: CanvasTextData = {
+            id: 'hardcoded-node-2',
+            x: 300,
+            y: 100,
+            width: 200,
+            height: 50,
+            text: 'Hardcoded Node 2',
+            type: 'text',
+            fontSize: 16,
+        };
+
+        nodes.push(hardcodedNode1);
+        nodes.push(hardcodedNode2);
+
+        edges.push({
+            id: 'hardcoded-edge-1-2',
+            fromNode: 'hardcoded-node-1',
+            toNode: 'hardcoded-node-2',
+            fromSide: 'right',
+            toSide: 'left',
+        });
+
+        console.log('Added hardcoded nodes and edge for troubleshooting');
 
         return { nodes, edges };
     }
