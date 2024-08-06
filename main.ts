@@ -1,14 +1,9 @@
 import { Notice, Plugin, TFile } from 'obsidian';
-import { CanvasData, CanvasEdgeData, CanvasTextData } from 'obsidian/canvas';
+import { CanvasData, CanvasEdgeData, CanvasTextData, NodeSide } from 'obsidian/canvas';
 
 // Define the structure of a Node
 interface Node extends CanvasTextData {
     fontSize: number;
-}
-
-// Define the structure of an Edge
-interface Edge extends CanvasEdgeData {
-    id: string;
 }
 
 // Plugin class definition
@@ -78,14 +73,14 @@ export default class HelloWorldPlugin extends Plugin {
             fontSize: 16,
         };
 
-        const nodes = [hardcodedNode1, hardcodedNode2];
+        const nodes: CanvasTextData[] = [hardcodedNode1, hardcodedNode2];
 
         const edges: CanvasEdgeData[] = [{
             id: 'hardcoded-edge-1-2',
             fromNode: 'hardcoded-node-1',
             toNode: 'hardcoded-node-2',
-            fromSide: 'right',
-            toSide: 'left',
+            fromSide: 'right' as NodeSide,
+            toSide: 'left' as NodeSide,
         }];
 
         console.log('Adding hardcoded nodes and edge for troubleshooting');
