@@ -29,7 +29,10 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
                     }
                     try {
                         const fileContent = yield this.app.vault.read(activeFile);
+                        console.log('File content:', fileContent);
                         const { nodes, edges } = this.createNodesAndEdgesFromHeadings(fileContent);
+                        console.log('Nodes:', nodes);
+                        console.log('Edges:', edges);
                         // Create the canvas file with nodes and edges
                         yield this.app.vault.create(canvasFilePath, JSON.stringify({
                             "nodes": nodes,
@@ -59,10 +62,11 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
         let yPos = 0;
         const headingStack = [];
         lines.forEach((line, index) => {
+            var _a;
             const headingMatch = line.match(/^(#{1,6})\s+(.*)/);
             if (headingMatch) {
-                const level = headingMatch[1].length;
-                const text = headingMatch[2];
+                const level = ((_a = headingMatch[1]) === null || _a === void 0 ? void 0 : _a.length) || 0;
+                const text = headingMatch[2] || '';
                 const nodeId = `node-${index}`;
                 // Create the node
                 nodes.push({
@@ -76,15 +80,18 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
                     subtype: "heading",
                     fontSize: 16 + (6 - level) * 2,
                 });
+                console.log(`Created node: ${nodeId} at level ${level} with text "${text}"`);
                 // Create edges based on heading nesting
                 while (headingStack.length > 0 && headingStack[headingStack.length - 1].level >= level) {
                     headingStack.pop();
                 }
                 if (headingStack.length > 0) {
+                    const parentNodeId = headingStack[headingStack.length - 1].id;
                     edges.push({
-                        fromNode: headingStack[headingStack.length - 1].id,
+                        fromNode: parentNodeId,
                         toNode: nodeId
                     });
+                    console.log(`Created edge from ${parentNodeId} to ${nodeId}`);
                 }
                 headingStack.push({ id: nodeId, level });
                 yPos += 70; // Adjust spacing between nodes

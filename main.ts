@@ -41,7 +41,11 @@ export default class HelloWorldPlugin extends Plugin {
 
                 try {
                     const fileContent = await this.app.vault.read(activeFile);
+                    console.log('File content:', fileContent);
+
                     const { nodes, edges } = this.createNodesAndEdgesFromHeadings(fileContent);
+                    console.log('Nodes:', nodes);
+                    console.log('Edges:', edges);
 
                     // Create the canvas file with nodes and edges
                     await this.app.vault.create(canvasFilePath, JSON.stringify({
@@ -75,8 +79,8 @@ export default class HelloWorldPlugin extends Plugin {
         lines.forEach((line, index) => {
             const headingMatch = line.match(/^(#{1,6})\s+(.*)/);
             if (headingMatch) {
-                const level = headingMatch[1].length;
-                const text = headingMatch[2];
+                const level = headingMatch[1]?.length || 0;
+                const text = headingMatch[2] || '';
                 const nodeId = `node-${index}`;
 
                 // Create the node
@@ -92,16 +96,20 @@ export default class HelloWorldPlugin extends Plugin {
                     fontSize: 16 + (6 - level) * 2,
                 });
 
+                console.log(`Created node: ${nodeId} at level ${level} with text "${text}"`);
+
                 // Create edges based on heading nesting
                 while (headingStack.length > 0 && headingStack[headingStack.length - 1].level >= level) {
                     headingStack.pop();
                 }
 
                 if (headingStack.length > 0) {
+                    const parentNodeId = headingStack[headingStack.length - 1].id;
                     edges.push({
-                        fromNode: headingStack[headingStack.length - 1].id,
+                        fromNode: parentNodeId,
                         toNode: nodeId
                     });
+                    console.log(`Created edge from ${parentNodeId} to ${nodeId}`);
                 }
 
                 headingStack.push({ id: nodeId, level });
