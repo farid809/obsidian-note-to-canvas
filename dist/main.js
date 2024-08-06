@@ -27,15 +27,21 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
                         new obsidian_1.Notice(`Canvas "${fileName}.canvas" already exists!`);
                         return;
                     }
-                    const fileContent = yield this.app.vault.read(activeFile);
-                    const nodes = this.createNodesFromHeadings(fileContent);
-                    // Create the canvas file with nodes
-                    yield this.app.vault.create(canvasFilePath, JSON.stringify({
-                        "nodes": nodes,
-                        "edges": [],
-                        "version": "1"
-                    }));
-                    new obsidian_1.Notice(`Canvas "${fileName}.canvas" created with nodes!`);
+                    try {
+                        const fileContent = yield this.app.vault.read(activeFile);
+                        const nodes = this.createNodesFromHeadings(fileContent);
+                        // Create the canvas file with nodes
+                        yield this.app.vault.create(canvasFilePath, JSON.stringify({
+                            "nodes": nodes,
+                            "edges": [],
+                            "version": "1"
+                        }));
+                        new obsidian_1.Notice(`Canvas "${fileName}.canvas" created with nodes!`);
+                    }
+                    catch (error) {
+                        console.error("Error creating canvas:", error);
+                        new obsidian_1.Notice("Failed to create canvas.");
+                    }
                 }
                 else {
                     new obsidian_1.Notice('No active file found!');

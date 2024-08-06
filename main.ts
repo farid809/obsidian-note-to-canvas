@@ -20,17 +20,22 @@ export default class HelloWorldPlugin extends Plugin {
                     return;
                 }
 
-                const fileContent = await this.app.vault.read(activeFile);
-                const nodes = this.createNodesFromHeadings(fileContent);
+                try {
+                    const fileContent = await this.app.vault.read(activeFile);
+                    const nodes = this.createNodesFromHeadings(fileContent);
 
-                // Create the canvas file with nodes
-                await this.app.vault.create(canvasFilePath, JSON.stringify({
-                    "nodes": nodes,
-                    "edges": [],
-                    "version": "1"
-                }));
+                    // Create the canvas file with nodes
+                    await this.app.vault.create(canvasFilePath, JSON.stringify({
+                        "nodes": nodes,
+                        "edges": [],
+                        "version": "1"
+                    }));
 
-                new Notice(`Canvas "${fileName}.canvas" created with nodes!`);
+                    new Notice(`Canvas "${fileName}.canvas" created with nodes!`);
+                } catch (error) {
+                    console.error("Error creating canvas:", error);
+                    new Notice("Failed to create canvas.");
+                }
             } else {
                 new Notice('No active file found!');
             }
