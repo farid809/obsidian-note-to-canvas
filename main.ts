@@ -26,7 +26,17 @@ export default class HelloWorldPlugin extends Plugin {
     onunload(): void {}
 
     async createCanvas(mocFile: TFile): Promise<void> {
+        if (!mocFile || !mocFile.parent || !mocFile.basename) {
+            new Notice("Invalid file structure.");
+            return;
+        }
+
         const parentPath = mocFile.parent ? mocFile.parent.path : '';
+
+        if (!parentPath) {
+            new Notice("Invalid parent path.");
+            return;
+        }
 
         const canvasFilePath = `${parentPath}/${mocFile.basename} Canvas.canvas`;
 

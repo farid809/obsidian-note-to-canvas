@@ -32,7 +32,15 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
     onunload() { }
     createCanvas(mocFile) {
         return __awaiter(this, void 0, void 0, function* () {
+            if (!mocFile || !mocFile.parent || !mocFile.basename) {
+                new obsidian_1.Notice("Invalid file structure.");
+                return;
+            }
             const parentPath = mocFile.parent ? mocFile.parent.path : '';
+            if (!parentPath) {
+                new obsidian_1.Notice("Invalid parent path.");
+                return;
+            }
             const canvasFilePath = `${parentPath}/${mocFile.basename} Canvas.canvas`;
             // Default Canvas JSON structure
             const defaultCanvasJSON = {
