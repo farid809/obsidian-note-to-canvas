@@ -31833,3 +31833,4 @@ var HelloWorldPlugin = /** @class */ (function (_super) {
 }(obsidian.Plugin));
 
 module.exports = HelloWorldPlugin;
+//# sourceMappingURL=main.js.map
