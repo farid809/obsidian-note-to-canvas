@@ -4,16 +4,22 @@
   "description": "A simple Hello World plugin for Obsidian.",
   "main": "main.js",
   "scripts": {
-    "build": "tsc"
+    "build": "rollup -c"
   },
   "author": "Your Name",
   "license": "MIT",
+  "type": "module",
   "devDependencies": {
+    "@rollup/plugin-typescript": "^11.1.6",
     "@types/dagre": "^0.7.52",
     "obsidian": "^1.6.6",
+    "rollup": "^4.20.0",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "dagre": "^0.8.5"
+    "dagre": "^0.8.5",
+    "tslib": "^2.6.3"
   }
 }
