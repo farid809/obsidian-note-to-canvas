@@ -41,14 +41,15 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
             this.addCommand({
                 id: 'create-canvas',
                 name: 'Create Canvas from Note',
-                callback: () => {
+                checkCallback: (checking) => {
                     const activeFile = this.app.workspace.getActiveFile();
                     if (activeFile) {
-                        this.createCanvas(activeFile);
+                        if (!checking) {
+                            this.createCanvas(activeFile);
+                        }
+                        return true;
                     }
-                    else {
-                        new obsidian_1.Notice('No active file found!');
-                    }
+                    return false;
                 }
             });
         });
@@ -175,7 +176,7 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
             g.setEdge(edge.fromNode, edge.toNode);
         });
         dagre.layout(g);
-        g.nodes().forEach(v => {
+        g.nodes().forEach((v) => {
             const node = g.node(v);
             const canvasNode = nodes.find(n => n.id === v);
             if (canvasNode) {

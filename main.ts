@@ -13,13 +13,15 @@ export default class HelloWorldPlugin extends Plugin {
         this.addCommand({
             id: 'create-canvas',
             name: 'Create Canvas from Note',
-            callback: () => {
+            checkCallback: (checking: boolean) => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) {
-                    this.createCanvas(activeFile);
-                } else {
-                    new Notice('No active file found!');
+                    if (!checking) {
+                        this.createCanvas(activeFile);
+                    }
+                    return true;
                 }
+                return false;
             }
         });
     }
@@ -164,7 +166,7 @@ export default class HelloWorldPlugin extends Plugin {
 
         dagre.layout(g);
 
-        g.nodes().forEach(v => {
+        g.nodes().forEach((v: string) => {
             const node = g.node(v);
             const canvasNode = nodes.find(n => n.id === v);
             if (canvasNode) {
