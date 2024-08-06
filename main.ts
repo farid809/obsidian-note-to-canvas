@@ -1,7 +1,10 @@
 import { Notice, Plugin, TFile } from 'obsidian';
 import { CanvasData, CanvasTextData, CanvasEdgeData, NodeSide } from 'obsidian/canvas';
 import cytoscape from 'cytoscape';
-import dagre from 'dagre';
+import dagre from 'cytoscape-dagre';
+
+// Use the dagre layout in cytoscape
+cytoscape.use(dagre);
 
 // Define the structure of a Node
 interface Node extends CanvasTextData {
