@@ -1,5 +1,24 @@
 import { Plugin, Notice, TFile } from 'obsidian';
 
+// Define the structure of a Node
+interface Node {
+    id: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    label: string;
+    type: string;
+    subtype: string;
+    fontSize: number;
+}
+
+// Define the structure of an Edge
+interface Edge {
+    fromNode: string;
+    toNode: string;
+}
+
 // Plugin class definition
 export default class HelloWorldPlugin extends Plugin {
     async onload(): Promise<void> {
@@ -22,12 +41,12 @@ export default class HelloWorldPlugin extends Plugin {
 
                 try {
                     const fileContent = await this.app.vault.read(activeFile);
-                    const nodes = this.createNodesFromHeadings(fileContent);
+                    const { nodes, edges } = this.createNodesAndEdgesFromHeadings(fileContent);
 
-                    // Create the canvas file with nodes
+                    // Create the canvas file with nodes and edges
                     await this.app.vault.create(canvasFilePath, JSON.stringify({
                         "nodes": nodes,
-                        "edges": [],
+                        "edges": edges,
                         "version": "1"
                     }));
 
@@ -46,33 +65,51 @@ export default class HelloWorldPlugin extends Plugin {
         console.log('Unloading Hello World plugin');
     }
 
-    createNodesFromHeadings(fileContent: string): object[] {
+    createNodesAndEdgesFromHeadings(fileContent: string): { nodes: Node[], edges: Edge[] } {
         const lines = fileContent.split('\n');
-        const nodes: object[] = [];
+        const nodes: Node[] = [];
+        const edges: Edge[] = [];
         let yPos = 0;
+        const headingStack: { id: string, level: number }[] = [];
 
         lines.forEach((line, index) => {
             const headingMatch = line.match(/^(#{1,6})\s+(.*)/);
             if (headingMatch) {
                 const level = headingMatch[1].length;
                 const text = headingMatch[2];
+                const nodeId = `node-${index}`;
 
+                // Create the node
                 nodes.push({
-                    "id": `node-${index}`,
-                    "x": 100 * level,
-                    "y": yPos,
-                    "width": 200,
-                    "height": 50,
-                    "label": text,
-                    "type": "text",
-                    "subtype": "heading",
-                    "fontSize": 16 + (6 - level) * 2,
+                    id: nodeId,
+                    x: 100 * level,
+                    y: yPos,
+                    width: 200,
+                    height: 50,
+                    label: text,
+                    type: "text",
+                    subtype: "heading",
+                    fontSize: 16 + (6 - level) * 2,
                 });
+
+                // Create edges based on heading nesting
+                while (headingStack.length > 0 && headingStack[headingStack.length - 1].level >= level) {
+                    headingStack.pop();
+                }
+
+                if (headingStack.length > 0) {
+                    edges.push({
+                        fromNode: headingStack[headingStack.length - 1].id,
+                        toNode: nodeId
+                    });
+                }
+
+                headingStack.push({ id: nodeId, level });
 
                 yPos += 70; // Adjust spacing between nodes
             }
         });
 
-        return nodes;
+        return { nodes, edges };
     }
 }

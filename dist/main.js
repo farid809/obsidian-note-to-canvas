@@ -29,11 +29,11 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
                     }
                     try {
                         const fileContent = yield this.app.vault.read(activeFile);
-                        const nodes = this.createNodesFromHeadings(fileContent);
-                        // Create the canvas file with nodes
+                        const { nodes, edges } = this.createNodesAndEdgesFromHeadings(fileContent);
+                        // Create the canvas file with nodes and edges
                         yield this.app.vault.create(canvasFilePath, JSON.stringify({
                             "nodes": nodes,
-                            "edges": [],
+                            "edges": edges,
                             "version": "1"
                         }));
                         new obsidian_1.Notice(`Canvas "${fileName}.canvas" created with nodes!`);
@@ -52,30 +52,45 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
     onunload() {
         console.log('Unloading Hello World plugin');
     }
-    createNodesFromHeadings(fileContent) {
+    createNodesAndEdgesFromHeadings(fileContent) {
         const lines = fileContent.split('\n');
         const nodes = [];
+        const edges = [];
         let yPos = 0;
+        const headingStack = [];
         lines.forEach((line, index) => {
             const headingMatch = line.match(/^(#{1,6})\s+(.*)/);
             if (headingMatch) {
                 const level = headingMatch[1].length;
                 const text = headingMatch[2];
+                const nodeId = `node-${index}`;
+                // Create the node
                 nodes.push({
-                    "id": `node-${index}`,
-                    "x": 100 * level,
-                    "y": yPos,
-                    "width": 200,
-                    "height": 50,
-                    "label": text,
-                    "type": "text",
-                    "subtype": "heading",
-                    "fontSize": 16 + (6 - level) * 2,
+                    id: nodeId,
+                    x: 100 * level,
+                    y: yPos,
+                    width: 200,
+                    height: 50,
+                    label: text,
+                    type: "text",
+                    subtype: "heading",
+                    fontSize: 16 + (6 - level) * 2,
                 });
+                // Create edges based on heading nesting
+                while (headingStack.length > 0 && headingStack[headingStack.length - 1].level >= level) {
+                    headingStack.pop();
+                }
+                if (headingStack.length > 0) {
+                    edges.push({
+                        fromNode: headingStack[headingStack.length - 1].id,
+                        toNode: nodeId
+                    });
+                }
+                headingStack.push({ id: nodeId, level });
                 yPos += 70; // Adjust spacing between nodes
             }
         });
-        return nodes;
+        return { nodes, edges };
     }
 }
 exports.default = HelloWorldPlugin;
