@@ -56,35 +56,16 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
                 new obsidian_1.Notice(`Error creating canvas file: ${canvasFilePath}`);
                 return;
             }
-            // Add hardcoded nodes and edge for troubleshooting
-            const hardcodedNode1 = {
-                id: 'hardcoded-node-1',
-                x: 100,
-                y: 100,
-                width: 200,
-                height: 50,
-                text: 'Hardcoded Node 1',
-                type: 'text',
-                fontSize: 16,
-            };
-            const hardcodedNode2 = {
-                id: 'hardcoded-node-2',
-                x: 300,
-                y: 100,
-                width: 200,
-                height: 50,
-                text: 'Hardcoded Node 2',
-                type: 'text',
-                fontSize: 16,
-            };
-            const nodes = [hardcodedNode1, hardcodedNode2];
-            const edges = [{
-                    id: 'hardcoded-edge-1-2',
-                    fromNode: 'hardcoded-node-1',
-                    toNode: 'hardcoded-node-2',
-                    fromSide: 'right',
-                    toSide: 'left',
-                }];
+            // Read the content of the current note
+            let fileContent;
+            try {
+                fileContent = yield this.app.vault.read(mocFile);
+            }
+            catch (e) {
+                new obsidian_1.Notice('Error reading the file content.');
+                return;
+            }
+            const { nodes, edges } = this.createNodesAndEdgesFromHeadings(fileContent);
             // Add nodes and edges to canvas
             defaultCanvasJSON.nodes = nodes;
             defaultCanvasJSON.edges = edges;
@@ -106,6 +87,56 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
             }
             new obsidian_1.Notice(`Canvas "${mocFile.basename} Canvas.canvas" created with nodes!`);
         });
+    }
+    createNodesAndEdgesFromHeadings(fileContent) {
+        const lines = fileContent.split('\n');
+        const nodes = [];
+        const edges = [];
+        let yPos = 0;
+        const headingStack = [];
+        const spacing = 100; // Adjust spacing between nodes
+        lines.forEach((line, index) => {
+            var _a;
+            try {
+                const headingMatch = line.match(/^(#{1,6})\s+(.*)/);
+                if (headingMatch) {
+                    const level = ((_a = headingMatch[1]) === null || _a === void 0 ? void 0 : _a.length) || 0;
+                    const text = headingMatch[2] || '';
+                    const nodeId = `node-${index}`;
+                    // Create the node
+                    nodes.push({
+                        id: nodeId,
+                        x: level * spacing,
+                        y: yPos,
+                        width: 200,
+                        height: 50,
+                        text,
+                        type: "text",
+                        fontSize: 16 + (6 - level) * 2,
+                    });
+                    // Create edges based on heading nesting
+                    while (headingStack.length > 0 && headingStack[headingStack.length - 1].level >= level) {
+                        headingStack.pop();
+                    }
+                    if (headingStack.length > 0) {
+                        const parentNodeId = headingStack[headingStack.length - 1].id;
+                        edges.push({
+                            id: `edge-${parentNodeId}-${nodeId}`,
+                            fromNode: parentNodeId,
+                            toNode: nodeId,
+                            fromSide: "bottom",
+                            toSide: "top",
+                        });
+                    }
+                    headingStack.push({ id: nodeId, level });
+                    yPos += spacing; // Adjust spacing between nodes
+                }
+            }
+            catch (error) {
+                new obsidian_1.Notice(`Error processing line ${index + 1}: ${line}`);
+            }
+        });
+        return { nodes, edges };
     }
 }
 exports.default = HelloWorldPlugin;
