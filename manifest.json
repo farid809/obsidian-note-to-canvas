@@ -1,7 +1,7 @@
 {
     "id": "obsidian-note-to-canvas",
     "name": "obsidian-note-to-canvas",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "minAppVersion": "0.12.2",
     "description": "A simple Hello World plugin for Obsidian.",
     "author": "Mohamed Farid",
