@@ -9,8 +9,6 @@ interface Node extends CanvasTextData {
 // Plugin class definition
 export default class HelloWorldPlugin extends Plugin {
     async onload(): Promise<void> {
-        console.log('Loading Hello World plugin');
-
         this.addCommand({
             id: 'create-canvas',
             name: 'Create Canvas from Note',
@@ -25,9 +23,7 @@ export default class HelloWorldPlugin extends Plugin {
         });
     }
 
-    onunload(): void {
-        console.log('Unloading Hello World plugin');
-    }
+    onunload(): void {}
 
     async createCanvas(mocFile: TFile): Promise<void> {
         const parentPath = mocFile.parent ? mocFile.parent.path : '';
@@ -45,7 +41,6 @@ export default class HelloWorldPlugin extends Plugin {
         try {
             canvasFile = await this.app.vault.create(canvasFilePath, JSON.stringify(defaultCanvasJSON));
         } catch (e) {
-            console.error(e);
             new Notice(`Error creating canvas file: ${canvasFilePath}`);
             return;
         }
@@ -83,17 +78,25 @@ export default class HelloWorldPlugin extends Plugin {
             toSide: 'left' as NodeSide,
         }];
 
-        console.log('Adding hardcoded nodes and edge for troubleshooting');
-
         // Add nodes and edges to canvas
         defaultCanvasJSON.nodes = nodes;
         defaultCanvasJSON.edges = edges;
 
         // Write updated content to canvas file
-        await this.app.vault.modify(canvasFile, JSON.stringify(defaultCanvasJSON));
+        try {
+            await this.app.vault.modify(canvasFile, JSON.stringify(defaultCanvasJSON));
+        } catch (e) {
+            new Notice('Error writing to canvas file.');
+            return;
+        }
 
         // Open the canvas file in a new pane
-        await this.app.workspace.getLeaf(true).openFile(canvasFile);
+        try {
+            await this.app.workspace.getLeaf(true).openFile(canvasFile);
+        } catch (e) {
+            new Notice('Error opening the canvas file.');
+            return;
+        }
 
         new Notice(`Canvas "${mocFile.basename} Canvas.canvas" created with nodes!`);
     }

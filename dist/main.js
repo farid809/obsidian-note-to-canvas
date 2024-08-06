@@ -14,7 +14,6 @@ const obsidian_1 = require("obsidian");
 class HelloWorldPlugin extends obsidian_1.Plugin {
     onload() {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log('Loading Hello World plugin');
             this.addCommand({
                 id: 'create-canvas',
                 name: 'Create Canvas from Note',
@@ -30,9 +29,7 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
             });
         });
     }
-    onunload() {
-        console.log('Unloading Hello World plugin');
-    }
+    onunload() { }
     createCanvas(mocFile) {
         return __awaiter(this, void 0, void 0, function* () {
             const parentPath = mocFile.parent ? mocFile.parent.path : '';
@@ -48,7 +45,6 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
                 canvasFile = yield this.app.vault.create(canvasFilePath, JSON.stringify(defaultCanvasJSON));
             }
             catch (e) {
-                console.error(e);
                 new obsidian_1.Notice(`Error creating canvas file: ${canvasFilePath}`);
                 return;
             }
@@ -81,14 +77,25 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
                     fromSide: 'right',
                     toSide: 'left',
                 }];
-            console.log('Adding hardcoded nodes and edge for troubleshooting');
             // Add nodes and edges to canvas
             defaultCanvasJSON.nodes = nodes;
             defaultCanvasJSON.edges = edges;
             // Write updated content to canvas file
-            yield this.app.vault.modify(canvasFile, JSON.stringify(defaultCanvasJSON));
+            try {
+                yield this.app.vault.modify(canvasFile, JSON.stringify(defaultCanvasJSON));
+            }
+            catch (e) {
+                new obsidian_1.Notice('Error writing to canvas file.');
+                return;
+            }
             // Open the canvas file in a new pane
-            yield this.app.workspace.getLeaf(true).openFile(canvasFile);
+            try {
+                yield this.app.workspace.getLeaf(true).openFile(canvasFile);
+            }
+            catch (e) {
+                new obsidian_1.Notice('Error opening the canvas file.');
+                return;
+            }
             new obsidian_1.Notice(`Canvas "${mocFile.basename} Canvas.canvas" created with nodes!`);
         });
     }
