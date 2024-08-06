@@ -15,45 +15,56 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
     onload() {
         return __awaiter(this, void 0, void 0, function* () {
             console.log('Loading Hello World plugin');
-            // Add ribbon icon
-            this.addRibbonIcon('dice', 'Create Canvas', () => __awaiter(this, void 0, void 0, function* () {
-                const activeFile = this.app.workspace.getActiveFile();
-                if (activeFile) {
-                    const fileName = activeFile.basename;
-                    const parentPath = activeFile.parent ? activeFile.parent.path : '';
-                    const canvasFilePath = `${parentPath}/${fileName}.canvas`;
-                    // Check if the canvas file already exists
-                    if (yield this.app.vault.adapter.exists(canvasFilePath)) {
-                        new obsidian_1.Notice(`Canvas "${fileName}.canvas" already exists!`);
-                        return;
+            this.addCommand({
+                id: 'create-canvas',
+                name: 'Create Canvas from Note',
+                callback: () => {
+                    const activeFile = this.app.workspace.getActiveFile();
+                    if (activeFile) {
+                        this.createCanvas(activeFile);
                     }
-                    try {
-                        const fileContent = yield this.app.vault.read(activeFile);
-                        console.log('File content:', fileContent);
-                        const { nodes, edges } = this.createNodesAndEdgesFromHeadings(fileContent);
-                        console.log('Nodes:', nodes);
-                        console.log('Edges:', edges);
-                        // Create the canvas file with nodes and edges
-                        yield this.app.vault.create(canvasFilePath, JSON.stringify({
-                            "nodes": nodes,
-                            "edges": edges,
-                            "version": "1"
-                        }));
-                        new obsidian_1.Notice(`Canvas "${fileName}.canvas" created with nodes!`);
-                    }
-                    catch (error) {
-                        console.error("Error creating canvas:", error);
-                        new obsidian_1.Notice("Failed to create canvas.");
+                    else {
+                        new obsidian_1.Notice('No active file found!');
                     }
                 }
-                else {
-                    new obsidian_1.Notice('No active file found!');
-                }
-            }));
+            });
         });
     }
     onunload() {
         console.log('Unloading Hello World plugin');
+    }
+    createCanvas(mocFile) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const parentPath = mocFile.parent ? mocFile.parent.path : '';
+            const canvasFilePath = `${parentPath}/${mocFile.basename} Canvas.canvas`;
+            // Default Canvas JSON structure
+            const defaultCanvasJSON = {
+                edges: [],
+                nodes: []
+            };
+            // Check if canvas file already exists
+            let canvasFile;
+            try {
+                canvasFile = yield this.app.vault.create(canvasFilePath, JSON.stringify(defaultCanvasJSON));
+            }
+            catch (e) {
+                console.error(e);
+                new obsidian_1.Notice(`Error creating canvas file: ${canvasFilePath}`);
+                return;
+            }
+            const fileContent = yield this.app.vault.read(mocFile);
+            const { nodes, edges } = this.createNodesAndEdgesFromHeadings(fileContent);
+            console.log('Nodes:', nodes);
+            console.log('Edges:', edges);
+            // Add nodes and edges to canvas
+            defaultCanvasJSON.nodes = nodes;
+            defaultCanvasJSON.edges = edges;
+            // Write updated content to canvas file
+            yield this.app.vault.modify(canvasFile, JSON.stringify(defaultCanvasJSON));
+            // Open the canvas file in a new pane
+            yield this.app.workspace.getLeaf(true).openFile(canvasFile);
+            new obsidian_1.Notice(`Canvas "${mocFile.basename} Canvas.canvas" created with nodes!`);
+        });
     }
     createNodesAndEdgesFromHeadings(fileContent) {
         const lines = fileContent.split('\n');
@@ -75,9 +86,8 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
                     y: yPos,
                     width: 200,
                     height: 50,
-                    label: text,
+                    text,
                     type: "text",
-                    subtype: "heading",
                     fontSize: 16 + (6 - level) * 2,
                 });
                 console.log(`Created node: ${nodeId} at level ${level} with text "${text}"`);
@@ -88,8 +98,11 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
                 if (headingStack.length > 0) {
                     const parentNodeId = headingStack[headingStack.length - 1].id;
                     edges.push({
+                        id: `edge-${parentNodeId}-${nodeId}`,
                         fromNode: parentNodeId,
-                        toNode: nodeId
+                        toNode: nodeId,
+                        fromSide: "bottom",
+                        toSide: "top",
                     });
                     console.log(`Created edge from ${parentNodeId} to ${nodeId}`);
                 }

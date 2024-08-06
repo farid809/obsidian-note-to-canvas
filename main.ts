@@ -1,4 +1,5 @@
-import { Plugin, Notice, TFile } from 'obsidian';
+import { Notice, Plugin, TFile } from 'obsidian';
+import { CanvasData, CanvasEdgeData, CanvasTextData } from 'obsidian/canvas';
 
 // Define the structure of a Node
 interface Node {
@@ -17,6 +18,9 @@ interface Node {
 interface Edge {
     fromNode: string;
     toNode: string;
+    id: string;
+    fromSide: string;
+    toSide: string;
 }
 
 // Plugin class definition
@@ -24,43 +28,16 @@ export default class HelloWorldPlugin extends Plugin {
     async onload(): Promise<void> {
         console.log('Loading Hello World plugin');
 
-        // Add ribbon icon
-        this.addRibbonIcon('dice', 'Create Canvas', async () => {
-            const activeFile = this.app.workspace.getActiveFile();
-            if (activeFile) {
-                const fileName = activeFile.basename;
-                const parentPath = activeFile.parent ? activeFile.parent.path : '';
-
-                const canvasFilePath = `${parentPath}/${fileName}.canvas`;
-
-                // Check if the canvas file already exists
-                if (await this.app.vault.adapter.exists(canvasFilePath)) {
-                    new Notice(`Canvas "${fileName}.canvas" already exists!`);
-                    return;
+        this.addCommand({
+            id: 'create-canvas',
+            name: 'Create Canvas from Note',
+            callback: () => {
+                const activeFile = this.app.workspace.getActiveFile();
+                if (activeFile) {
+                    this.createCanvas(activeFile);
+                } else {
+                    new Notice('No active file found!');
                 }
-
-                try {
-                    const fileContent = await this.app.vault.read(activeFile);
-                    console.log('File content:', fileContent);
-
-                    const { nodes, edges } = this.createNodesAndEdgesFromHeadings(fileContent);
-                    console.log('Nodes:', nodes);
-                    console.log('Edges:', edges);
-
-                    // Create the canvas file with nodes and edges
-                    await this.app.vault.create(canvasFilePath, JSON.stringify({
-                        "nodes": nodes,
-                        "edges": edges,
-                        "version": "1"
-                    }));
-
-                    new Notice(`Canvas "${fileName}.canvas" created with nodes!`);
-                } catch (error) {
-                    console.error("Error creating canvas:", error);
-                    new Notice("Failed to create canvas.");
-                }
-            } else {
-                new Notice('No active file found!');
             }
         });
     }
@@ -69,10 +46,50 @@ export default class HelloWorldPlugin extends Plugin {
         console.log('Unloading Hello World plugin');
     }
 
-    createNodesAndEdgesFromHeadings(fileContent: string): { nodes: Node[], edges: Edge[] } {
+    async createCanvas(mocFile: TFile): Promise<void> {
+        const parentPath = mocFile.parent ? mocFile.parent.path : '';
+
+        const canvasFilePath = `${parentPath}/${mocFile.basename} Canvas.canvas`;
+
+        // Default Canvas JSON structure
+        const defaultCanvasJSON: CanvasData = {
+            edges: [],
+            nodes: []
+        };
+
+        // Check if canvas file already exists
+        let canvasFile;
+        try {
+            canvasFile = await this.app.vault.create(canvasFilePath, JSON.stringify(defaultCanvasJSON));
+        } catch (e) {
+            console.error(e);
+            new Notice(`Error creating canvas file: ${canvasFilePath}`);
+            return;
+        }
+
+        const fileContent = await this.app.vault.read(mocFile);
+        const { nodes, edges } = this.createNodesAndEdgesFromHeadings(fileContent);
+
+        console.log('Nodes:', nodes);
+        console.log('Edges:', edges);
+
+        // Add nodes and edges to canvas
+        defaultCanvasJSON.nodes = nodes as CanvasTextData[];
+        defaultCanvasJSON.edges = edges as CanvasEdgeData[];
+
+        // Write updated content to canvas file
+        await this.app.vault.modify(canvasFile, JSON.stringify(defaultCanvasJSON));
+
+        // Open the canvas file in a new pane
+        await this.app.workspace.getLeaf(true).openFile(canvasFile);
+
+        new Notice(`Canvas "${mocFile.basename} Canvas.canvas" created with nodes!`);
+    }
+
+    createNodesAndEdgesFromHeadings(fileContent: string): { nodes: CanvasTextData[], edges: CanvasEdgeData[] } {
         const lines = fileContent.split('\n');
-        const nodes: Node[] = [];
-        const edges: Edge[] = [];
+        const nodes: CanvasTextData[] = [];
+        const edges: CanvasEdgeData[] = [];
         let yPos = 0;
         const headingStack: { id: string, level: number }[] = [];
 
@@ -90,9 +107,8 @@ export default class HelloWorldPlugin extends Plugin {
                     y: yPos,
                     width: 200,
                     height: 50,
-                    label: text,
+                    text,
                     type: "text",
-                    subtype: "heading",
                     fontSize: 16 + (6 - level) * 2,
                 });
 
@@ -106,8 +122,11 @@ export default class HelloWorldPlugin extends Plugin {
                 if (headingStack.length > 0) {
                     const parentNodeId = headingStack[headingStack.length - 1].id;
                     edges.push({
+                        id: `edge-${parentNodeId}-${nodeId}`,
                         fromNode: parentNodeId,
-                        toNode: nodeId
+                        toNode: nodeId,
+                        fromSide: "bottom",
+                        toSide: "top",
                     });
                     console.log(`Created edge from ${parentNodeId} to ${nodeId}`);
                 }
