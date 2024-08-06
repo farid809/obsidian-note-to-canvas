@@ -52,14 +52,36 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
                 new obsidian_1.Notice(`Error creating canvas file: ${canvasFilePath}`);
                 return;
             }
-            const fileContent = yield this.app.vault.read(mocFile);
-            if (!fileContent) {
-                new obsidian_1.Notice("File content is empty or couldn't be read.");
-                return;
-            }
-            const { nodes, edges } = this.createNodesAndEdgesFromHeadings(fileContent);
-            console.log('Nodes:', nodes);
-            console.log('Edges:', edges);
+            // Add hardcoded nodes and edge for troubleshooting
+            const hardcodedNode1 = {
+                id: 'hardcoded-node-1',
+                x: 100,
+                y: 100,
+                width: 200,
+                height: 50,
+                text: 'Hardcoded Node 1',
+                type: 'text',
+                fontSize: 16,
+            };
+            const hardcodedNode2 = {
+                id: 'hardcoded-node-2',
+                x: 300,
+                y: 100,
+                width: 200,
+                height: 50,
+                text: 'Hardcoded Node 2',
+                type: 'text',
+                fontSize: 16,
+            };
+            const nodes = [hardcodedNode1, hardcodedNode2];
+            const edges = [{
+                    id: 'hardcoded-edge-1-2',
+                    fromNode: 'hardcoded-node-1',
+                    toNode: 'hardcoded-node-2',
+                    fromSide: 'right',
+                    toSide: 'left',
+                }];
+            console.log('Adding hardcoded nodes and edge for troubleshooting');
             // Add nodes and edges to canvas
             defaultCanvasJSON.nodes = nodes;
             defaultCanvasJSON.edges = edges;
@@ -69,89 +91,6 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
             yield this.app.workspace.getLeaf(true).openFile(canvasFile);
             new obsidian_1.Notice(`Canvas "${mocFile.basename} Canvas.canvas" created with nodes!`);
         });
-    }
-    createNodesAndEdgesFromHeadings(fileContent) {
-        const lines = fileContent.split('\n');
-        const nodes = [];
-        const edges = [];
-        let yPos = 0;
-        const headingStack = [];
-        lines.forEach((line, index) => {
-            var _a;
-            try {
-                const headingMatch = line.match(/^(#{1,6})\s+(.*)/);
-                if (headingMatch) {
-                    const level = ((_a = headingMatch[1]) === null || _a === void 0 ? void 0 : _a.length) || 0;
-                    const text = headingMatch[2] || '';
-                    const nodeId = `node-${index}`;
-                    // Create the node
-                    nodes.push({
-                        id: nodeId,
-                        x: 100 * level,
-                        y: yPos,
-                        width: 200,
-                        height: 50,
-                        text,
-                        type: "text",
-                        fontSize: 16 + (6 - level) * 2,
-                    });
-                    console.log(`Created node: ${nodeId} at level ${level} with text "${text}"`);
-                    // Create edges based on heading nesting
-                    while (headingStack.length > 0 && headingStack[headingStack.length - 1].level >= level) {
-                        headingStack.pop();
-                    }
-                    if (headingStack.length > 0) {
-                        const parentNodeId = headingStack[headingStack.length - 1].id;
-                        edges.push({
-                            id: `edge-${parentNodeId}-${nodeId}`,
-                            fromNode: parentNodeId,
-                            toNode: nodeId,
-                            fromSide: "bottom",
-                            toSide: "top",
-                        });
-                        console.log(`Created edge from ${parentNodeId} to ${nodeId}`);
-                    }
-                    headingStack.push({ id: nodeId, level });
-                    yPos += 70; // Adjust spacing between nodes
-                }
-            }
-            catch (error) {
-                console.error(`Error processing line ${index + 1}:`, line);
-                console.error(error);
-            }
-        });
-        // Add hardcoded nodes and edge for troubleshooting
-        const hardcodedNode1 = {
-            id: 'hardcoded-node-1',
-            x: 100,
-            y: 100,
-            width: 200,
-            height: 50,
-            text: 'Hardcoded Node 1',
-            type: 'text',
-            fontSize: 16,
-        };
-        const hardcodedNode2 = {
-            id: 'hardcoded-node-2',
-            x: 300,
-            y: 100,
-            width: 200,
-            height: 50,
-            text: 'Hardcoded Node 2',
-            type: 'text',
-            fontSize: 16,
-        };
-        nodes.push(hardcodedNode1);
-        nodes.push(hardcodedNode2);
-        edges.push({
-            id: 'hardcoded-edge-1-2',
-            fromNode: 'hardcoded-node-1',
-            toNode: 'hardcoded-node-2',
-            fromSide: 'right',
-            toSide: 'left',
-        });
-        console.log('Added hardcoded nodes and edge for troubleshooting');
-        return { nodes, edges };
     }
 }
 exports.default = HelloWorldPlugin;

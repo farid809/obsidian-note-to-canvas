@@ -1,5 +1,5 @@
 import { Notice, Plugin, TFile } from 'obsidian';
-import { CanvasData, CanvasEdgeData, CanvasTextData, NodeSide } from 'obsidian/canvas';
+import { CanvasData, CanvasEdgeData, CanvasTextData } from 'obsidian/canvas';
 
 // Define the structure of a Node
 interface Node extends CanvasTextData {
@@ -9,8 +9,6 @@ interface Node extends CanvasTextData {
 // Define the structure of an Edge
 interface Edge extends CanvasEdgeData {
     id: string;
-    fromSide: NodeSide;
-    toSide: NodeSide;
 }
 
 // Plugin class definition
@@ -57,86 +55,6 @@ export default class HelloWorldPlugin extends Plugin {
             return;
         }
 
-        const fileContent = await this.app.vault.read(mocFile);
-        if (!fileContent) {
-            new Notice("File content is empty or couldn't be read.");
-            return;
-        }
-
-        const { nodes, edges } = this.createNodesAndEdgesFromHeadings(fileContent);
-
-        console.log('Nodes:', nodes);
-        console.log('Edges:', edges);
-
-        // Add nodes and edges to canvas
-        defaultCanvasJSON.nodes = nodes;
-        defaultCanvasJSON.edges = edges;
-
-        // Write updated content to canvas file
-        await this.app.vault.modify(canvasFile, JSON.stringify(defaultCanvasJSON));
-
-        // Open the canvas file in a new pane
-        await this.app.workspace.getLeaf(true).openFile(canvasFile);
-
-        new Notice(`Canvas "${mocFile.basename} Canvas.canvas" created with nodes!`);
-    }
-
-    createNodesAndEdgesFromHeadings(fileContent: string): { nodes: CanvasTextData[], edges: CanvasEdgeData[] } {
-        const lines = fileContent.split('\n');
-        const nodes: CanvasTextData[] = [];
-        const edges: CanvasEdgeData[] = [];
-        let yPos = 0;
-        const headingStack: { id: string, level: number }[] = [];
-
-        lines.forEach((line, index) => {
-            try {
-                const headingMatch = line.match(/^(#{1,6})\s+(.*)/);
-                if (headingMatch) {
-                    const level = headingMatch[1]?.length || 0;
-                    const text = headingMatch[2] || '';
-                    const nodeId = `node-${index}`;
-
-                    // Create the node
-                    nodes.push({
-                        id: nodeId,
-                        x: 100 * level,
-                        y: yPos,
-                        width: 200,
-                        height: 50,
-                        text,
-                        type: "text",
-                        fontSize: 16 + (6 - level) * 2,
-                    });
-
-                    console.log(`Created node: ${nodeId} at level ${level} with text "${text}"`);
-
-                    // Create edges based on heading nesting
-                    while (headingStack.length > 0 && headingStack[headingStack.length - 1].level >= level) {
-                        headingStack.pop();
-                    }
-
-                    if (headingStack.length > 0) {
-                        const parentNodeId = headingStack[headingStack.length - 1].id;
-                        edges.push({
-                            id: `edge-${parentNodeId}-${nodeId}`,
-                            fromNode: parentNodeId,
-                            toNode: nodeId,
-                            fromSide: "bottom",
-                            toSide: "top",
-                        });
-                        console.log(`Created edge from ${parentNodeId} to ${nodeId}`);
-                    }
-
-                    headingStack.push({ id: nodeId, level });
-
-                    yPos += 70; // Adjust spacing between nodes
-                }
-            } catch (error) {
-                console.error(`Error processing line ${index + 1}:`, line);
-                console.error(error);
-            }
-        });
-
         // Add hardcoded nodes and edge for troubleshooting
         const hardcodedNode1: CanvasTextData = {
             id: 'hardcoded-node-1',
@@ -160,19 +78,28 @@ export default class HelloWorldPlugin extends Plugin {
             fontSize: 16,
         };
 
-        nodes.push(hardcodedNode1);
-        nodes.push(hardcodedNode2);
+        const nodes = [hardcodedNode1, hardcodedNode2];
 
-        edges.push({
+        const edges: CanvasEdgeData[] = [{
             id: 'hardcoded-edge-1-2',
             fromNode: 'hardcoded-node-1',
             toNode: 'hardcoded-node-2',
             fromSide: 'right',
             toSide: 'left',
-        });
+        }];
 
-        console.log('Added hardcoded nodes and edge for troubleshooting');
+        console.log('Adding hardcoded nodes and edge for troubleshooting');
 
-        return { nodes, edges };
+        // Add nodes and edges to canvas
+        defaultCanvasJSON.nodes = nodes;
+        defaultCanvasJSON.edges = edges;
+
+        // Write updated content to canvas file
+        await this.app.vault.modify(canvasFile, JSON.stringify(defaultCanvasJSON));
+
+        // Open the canvas file in a new pane
+        await this.app.workspace.getLeaf(true).openFile(canvasFile);
+
+        new Notice(`Canvas "${mocFile.basename} Canvas.canvas" created with nodes!`);
     }
 }
