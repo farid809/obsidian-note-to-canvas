@@ -1,0 +1,15 @@
+{
+  "name": "obsidian-note-to-canvas",
+  "version": "1.0.2",
+  "description": "A simple Hello World plugin for Obsidian.",
+  "main": "main.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "obsidian": "^1.6.6",
+    "typescript": "^5.5.4"
+  }
+}
