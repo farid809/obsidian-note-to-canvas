@@ -1,5 +1,6 @@
 import { Notice, Plugin, TFile } from 'obsidian';
 import { CanvasData, CanvasEdgeData, CanvasTextData, NodeSide } from 'obsidian/canvas';
+import * as dagre from 'dagre';
 
 // Define the structure of a Node
 interface Node extends CanvasTextData {
@@ -70,6 +71,9 @@ export default class HelloWorldPlugin extends Plugin {
         defaultCanvasJSON.nodes = nodes;
         defaultCanvasJSON.edges = edges;
 
+        // Layout the nodes using dagre
+        this.layoutNodesAndEdges(nodes, edges);
+
         // Write updated content to canvas file
         try {
             await this.app.vault.modify(canvasFile, JSON.stringify(defaultCanvasJSON));
@@ -108,8 +112,8 @@ export default class HelloWorldPlugin extends Plugin {
                     // Create the node
                     nodes.push({
                         id: nodeId,
-                        x: level * spacing,
-                        y: yPos,
+                        x: 0,
+                        y: 0,
                         width: 200,
                         height: 50,
                         text,
@@ -143,5 +147,30 @@ export default class HelloWorldPlugin extends Plugin {
         });
 
         return { nodes, edges };
+    }
+
+    layoutNodesAndEdges(nodes: CanvasTextData[], edges: CanvasEdgeData[]): void {
+        const g = new dagre.graphlib.Graph();
+        g.setGraph({});
+        g.setDefaultEdgeLabel(() => ({}));
+
+        nodes.forEach(node => {
+            g.setNode(node.id, { width: node.width, height: node.height });
+        });
+
+        edges.forEach(edge => {
+            g.setEdge(edge.fromNode, edge.toNode);
+        });
+
+        dagre.layout(g);
+
+        g.nodes().forEach(v => {
+            const node = g.node(v);
+            const canvasNode = nodes.find(n => n.id === v);
+            if (canvasNode) {
+                canvasNode.x = node.x - node.width / 2;
+                canvasNode.y = node.y - node.height / 2;
+            }
+        });
     }
 }

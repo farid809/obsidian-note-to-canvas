@@ -9,7 +9,11 @@
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
+    "@types/dagre": "^0.7.52",
     "obsidian": "^1.6.6",
     "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "dagre": "^0.8.5"
   }
 }

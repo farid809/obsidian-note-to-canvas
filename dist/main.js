@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -10,6 +33,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const obsidian_1 = require("obsidian");
+const dagre = __importStar(require("dagre"));
 // Plugin class definition
 class HelloWorldPlugin extends obsidian_1.Plugin {
     onload() {
@@ -69,6 +93,8 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
             // Add nodes and edges to canvas
             defaultCanvasJSON.nodes = nodes;
             defaultCanvasJSON.edges = edges;
+            // Layout the nodes using dagre
+            this.layoutNodesAndEdges(nodes, edges);
             // Write updated content to canvas file
             try {
                 yield this.app.vault.modify(canvasFile, JSON.stringify(defaultCanvasJSON));
@@ -106,8 +132,8 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
                     // Create the node
                     nodes.push({
                         id: nodeId,
-                        x: level * spacing,
-                        y: yPos,
+                        x: 0,
+                        y: 0,
                         width: 200,
                         height: 50,
                         text,
@@ -137,6 +163,26 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
             }
         });
         return { nodes, edges };
+    }
+    layoutNodesAndEdges(nodes, edges) {
+        const g = new dagre.graphlib.Graph();
+        g.setGraph({});
+        g.setDefaultEdgeLabel(() => ({}));
+        nodes.forEach(node => {
+            g.setNode(node.id, { width: node.width, height: node.height });
+        });
+        edges.forEach(edge => {
+            g.setEdge(edge.fromNode, edge.toNode);
+        });
+        dagre.layout(g);
+        g.nodes().forEach(v => {
+            const node = g.node(v);
+            const canvasNode = nodes.find(n => n.id === v);
+            if (canvasNode) {
+                canvasNode.x = node.x - node.width / 2;
+                canvasNode.y = node.y - node.height / 2;
+            }
+        });
     }
 }
 exports.default = HelloWorldPlugin;
