@@ -53,6 +53,10 @@ class HelloWorldPlugin extends obsidian_1.Plugin {
                 return;
             }
             const fileContent = yield this.app.vault.read(mocFile);
+            if (!fileContent) {
+                new obsidian_1.Notice("File content is empty or couldn't be read.");
+                return;
+            }
             const { nodes, edges } = this.createNodesAndEdgesFromHeadings(fileContent);
             console.log('Nodes:', nodes);
             console.log('Edges:', edges);

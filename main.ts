@@ -1,26 +1,16 @@
 import { Notice, Plugin, TFile } from 'obsidian';
-import { CanvasData, CanvasEdgeData, CanvasTextData } from 'obsidian/canvas';
+import { CanvasData, CanvasEdgeData, CanvasTextData, NodeSide } from 'obsidian/canvas';
 
 // Define the structure of a Node
-interface Node {
-    id: string;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    label: string;
-    type: string;
-    subtype: string;
+interface Node extends CanvasTextData {
     fontSize: number;
 }
 
 // Define the structure of an Edge
-interface Edge {
-    fromNode: string;
-    toNode: string;
+interface Edge extends CanvasEdgeData {
     id: string;
-    fromSide: string;
-    toSide: string;
+    fromSide: NodeSide;
+    toSide: NodeSide;
 }
 
 // Plugin class definition
@@ -68,14 +58,19 @@ export default class HelloWorldPlugin extends Plugin {
         }
 
         const fileContent = await this.app.vault.read(mocFile);
+        if (!fileContent) {
+            new Notice("File content is empty or couldn't be read.");
+            return;
+        }
+
         const { nodes, edges } = this.createNodesAndEdgesFromHeadings(fileContent);
 
         console.log('Nodes:', nodes);
         console.log('Edges:', edges);
 
         // Add nodes and edges to canvas
-        defaultCanvasJSON.nodes = nodes as CanvasTextData[];
-        defaultCanvasJSON.edges = edges as CanvasEdgeData[];
+        defaultCanvasJSON.nodes = nodes;
+        defaultCanvasJSON.edges = edges;
 
         // Write updated content to canvas file
         await this.app.vault.modify(canvasFile, JSON.stringify(defaultCanvasJSON));
