@@ -45813,9 +45813,9 @@ var HelloWorldPlugin = /** @class */ (function (_super) {
             layout: {
                 name: 'dagre', // You can change this to other layout algorithms like 'grid', 'circle', etc.
                 rankDir: 'TB', // Top to bottom
-                nodeSep: 50,
-                edgeSep: 10,
-                rankSep: 50
+                nodeSep: 100, // Increase this value to add more space between nodes
+                edgeSep: 50, // Increase this value to add more space between edges
+                rankSep: 100 // Increase this value to add more space between ranks
             },
             style: [
                 {
@@ -45853,9 +45853,9 @@ var HelloWorldPlugin = /** @class */ (function (_super) {
             layout: {
                 name: 'dagre', // You can change this to other layout algorithms like 'grid', 'circle', etc.
                 rankDir: 'TB', // Top to bottom
-                nodeSep: 50,
-                edgeSep: 10,
-                rankSep: 50
+                nodeSep: 100, // Increase this value to add more space between nodes
+                edgeSep: 50, // Increase this value to add more space between edges
+                rankSep: 100 // Increase this value to add more space between ranks
             },
             style: [
                 {
